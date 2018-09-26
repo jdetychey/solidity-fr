@@ -777,6 +777,25 @@ BOOST_AUTO_TEST_CASE(create_one_arg)
 	}
 }
 
+BOOST_AUTO_TEST_CASE(create_without_return)
+{
+	// "call" does not retain enough gas.
+	// Disabling for non-tangerineWhistle VMs.
+	if (dev::test::Options::get().evmVersion().canOverchargeGasForCall())
+	{
+		char const* sourceCode = R"(
+			(returnlll
+				(seq
+					(call allgas
+						(create 42 (returnlll (return (balance (address)))))
+						0 0 0 0x00 0x20)
+					(return 0x00 0x20)))
+		)";
+		compileAndRun(sourceCode);
+		BOOST_CHECK(callFallbackWithValue(42) == encodeArgs(u256(42)));
+	}
+}
+
 BOOST_AUTO_TEST_CASE(create_two_args)
 {
 	// "call" does not retain enough gas.
@@ -795,6 +814,7 @@ BOOST_AUTO_TEST_CASE(create_two_args)
 		BOOST_CHECK(callFallbackWithValue(42) == encodeArgs(u256(42)));
 	}
 }
+BO
 
 BOOST_AUTO_TEST_CASE(sha3_two_args)
 {
@@ -984,6 +1004,16 @@ BOOST_AUTO_TEST_CASE(shift_right)
 	)";
 	compileAndRun(sourceCode);
 	BOOST_CHECK(callFallback() == encodeArgs(u256(256)));
+}
+
+BOOST_AUTO_TEST_CASE(sub_assemblies)
+{
+	char const* sourceCode = R"(
+		(returnlll
+			(return (create 0 0 (returnlll (sstore 1 1)))))
+	)";
+	compileAndRun(sourceCode);
+	BOOST_CHECK(callFallback() == encodeArgs(u256(1)));
 }
 
 BOOST_AUTO_TEST_SUITE_END()
