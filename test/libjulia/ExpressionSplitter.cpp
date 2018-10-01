@@ -15,7 +15,7 @@
 	along with solidity.  If not, see <http://www.gnu.org/licenses/>.
 */
 /**
- * Unit tests for the expression breaker.
+ * Unit tests for the expression splitter.
  */
 
 #include <test/libjulia/Common.h>
