@@ -38,7 +38,9 @@ public:
 	using ASTModifier::operator();
 	virtual void visit(Expression& _expression);
 
+	static void run(Block& _ast);
 private:
+	ExpressionSimplifier() {}
 };
 
 }

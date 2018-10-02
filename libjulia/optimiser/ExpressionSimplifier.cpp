@@ -21,6 +21,10 @@
 #include <libjulia/optimiser/ExpressionSimplifier.h>
 
 #include <libjulia/optimiser/SimplificationRules.h>
+#include <libjulia/optimiser/ExpressionBreaker.h>
+#include <libjulia/optimiser/ExpressionUnbreaker.h>
+#include <libjulia/optimiser/NameCollector.h>
+#include <libjulia/optimiser/NameDispenser.h>
 #include <libjulia/optimiser/Semantics.h>
 
 #include <libsolidity/inlineasm/AsmData.h>
@@ -41,8 +45,24 @@ void ExpressionSimplifier::visit(Expression& _expression)
 		// Do not apply the rule if it removes non-constant parts of the expression.
 		// TODO: The check could actually be less strict than "movable".
 		// We only require "Does not cause side-effects".
+
+		// TODO: Another thing we could do: If "any" expressions are only variables,
+		// we do not have to check for movability.
 		if (match->removesNonConstants && !MovableChecker(_expression).movable())
 			return;
 		_expression = match->action().toExpression(locationOf(_expression));
 	}
+}
+
+void ExpressionSimplifier::run(Block& _ast)
+{
+	NameDispenser dispenser;
+	dispenser.m_usedNames = NameCollector(_ast).names();
+
+	// TODO we could assume it to be broken already
+	ExpressionBreaker{dispenser}(_ast);
+
+	ExpressionSimplifier{}(_ast);
+
+	ExpressionUnbreaker{_ast}(_ast);
 }

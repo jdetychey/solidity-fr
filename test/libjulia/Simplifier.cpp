@@ -42,7 +42,7 @@ do\
 {\
 	assembly::AsmPrinter p;\
 	Block b = *(parse(_original, false).first);\
-	(ExpressionSimplifier{})(b);\
+	ExpressionSimplifier::run(b);\
 	string result = p(b);\
 	BOOST_CHECK_EQUAL(result, format(_expectation, false));\
 }\
@@ -145,7 +145,7 @@ BOOST_AUTO_TEST_CASE(not_applied_removes_non_constant_and_not_movable)
 		// The first argument of div is not constant.
 		// keccak256 is not movable.
 		"{ let a := div(keccak256(0, 0), 0) }",
-		"{ let a := div(keccak256(0, 0), 0) }"
+		"{ let _1 := keccak256(0, 0) let a := 0 }"
 	);
 }
 
