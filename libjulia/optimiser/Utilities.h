@@ -30,5 +30,29 @@ namespace julia
 /// Removes statements that are just empty blocks (non-recursive).
 void removeEmptyBlocks(Block& _block);
 
+template <class...>
+struct GenericVisitor{};
+
+template <class Visitable, class... Others>
+struct GenericVisitor<Visitable, Others...>: public GenericVisitor<Others...>
+{
+	using GenericVisitor<Others...>::operator ();
+	explicit GenericVisitor(
+		std::function<void(Visitable&)> _visitor,
+		std::function<void(Others&)>... _otherVisitors
+	):
+		GenericVisitor<Others...>(_otherVisitors...),
+		m_visitor(_visitor)
+	{}
+
+	void operator()(Visitable& _v) const { m_visitor(_v); }
+
+	std::function<void(Visitable&)> m_visitor;
+};
+template <>
+struct GenericVisitor<>: public boost::static_visitor<> {
+	void operator()() const {}
+};
+
 }
 }

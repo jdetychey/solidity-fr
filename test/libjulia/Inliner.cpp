@@ -244,102 +244,101 @@ BOOST_AUTO_TEST_CASE(simple)
 
 BOOST_AUTO_TEST_CASE(multi_fun)
 {
-	BOOST_CHECK_EQUAL(
-		fullInline("{"
-			"function f(a) -> x { x := add(a, a) }"
-			"function g(b, c) -> y { y := mul(mload(c), f(b)) }"
-			"let y := g(f(3), 7)"
-		"}", false),
-		format("{"
-			"{"
-				"let g_c := 7 "
-				"let f_a_1 := 3 "
-				"let f_x_1 "
-				"{ f_x_1 := add(f_a_1, f_a_1) } "
-				"let g_y "
-				"{"
-					"let g_f_a := f_x_1 "
-					"let g_f_x "
-					"{"
-						"g_f_x := add(g_f_a, g_f_a)"
-					"}"
-					"g_y := mul(mload(g_c), g_f_x)"
-				"}"
-				"let y_1 := g_y"
-			"}"
-			"function f(a) -> x"
-			"{"
-				"x := add(a, a)"
-			"}"
-			"function g(b, c) -> y"
-			"{"
-				"let f_a := b "
-				"let f_x "
-				"{"
-					"f_x := add(f_a, f_a)"
-				"}"
-				"y := mul(mload(c), f_x)"
-			"}"
-		"}", false)
-	);
+	string input = R"({
+		function f(a) -> x { x := add(a, a) }
+		function g(b, c) -> y { y := mul(mload(c), f(b)) }
+		let y := g(f(3), 7)
+	})";
+	string expectation = R"({
+		{
+			let f_a := 3
+			let f_x
+			{
+				f_x := add(f_a, f_a)
+			}
+			let g_b := f_x
+			let g_c := 7
+			let g_y
+			{
+				let g_f_a_1 := g_b
+				let g_f_x_1
+				{
+					g_f_x_1 := add(g_f_a_1, g_f_a_1)
+				}
+				g_y := mul(mload(g_c), g_f_x_1)
+			}
+			let y_1 := g_y
+		}
+		function f(a) -> x
+		{
+			x := add(a, a)
+		}
+		function g(b, c) -> y
+		{
+			let f_a_1 := b
+			let f_x_1
+			{
+				f_x_1 := add(f_a_1, f_a_1)
+			}
+			y := mul(mload(c), f_x_1)
+		}
+	})";
+	BOOST_CHECK_EQUAL(fullInline(input, false), format(expectation, false));
 }
 
 BOOST_AUTO_TEST_CASE(move_up_rightwards_arguments)
 {
-	BOOST_CHECK_EQUAL(
-		fullInline("{"
-			"function f(a, b, c) -> x { x := add(a, b) x := mul(x, c) }"
-			"let y := add(mload(1), add(f(mload(2), mload(3), mload(4)), mload(5)))"
-		"}", false),
-		format("{"
-			"{"
-				"let _1 := mload(5)"
-				"let f_c := mload(4)"
-				"let f_b := mload(3)"
-				"let f_a := mload(2)"
-				"let f_x"
-				"{"
-					"f_x := add(f_a, f_b)"
-					"f_x := mul(f_x, f_c)"
-				"}"
-				"let y := add(mload(1), add(f_x, _1))"
-			"}"
-			"function f(a, b, c) -> x"
-			"{"
-				"x := add(a, b)"
-				"x := mul(x, c)"
-			"}"
-		"}", false)
-	);
+	string input = R"({
+			function f(a, b, c) -> x { x := add(a, b) x := mul(x, c) }
+			let y := add(mload(1), add(f(mload(2), mload(3), mload(4)), mload(5)))
+	})";
+	string expectation = R"({
+		{
+			let _1 := mload(5)
+			let _2 := mload(4)
+			let _3 := mload(3)
+			let f_a := mload(2)
+			let f_b := _3
+			let f_c := _2
+			let f_x
+			{
+				f_x := add(f_a, f_b)
+				f_x := mul(f_x, f_c)
+			}
+			let y := add(mload(1), add(f_x, _1))
+		}
+		function f(a, b, c) -> x
+		{
+			x := add(a, b)
+			x := mul(x, c)
+		}
+	})";
+	BOOST_CHECK_EQUAL(fullInline(input, false), format(expectation, false));
 }
 
 BOOST_AUTO_TEST_CASE(pop_result)
 {
-	// This tests that `pop(r)` is removed.
-	BOOST_CHECK_EQUAL(
-		fullInline("{"
-			"function f(a) -> x { let r := mul(a, a) x := add(r, r) }"
-			"pop(add(f(7), 2))"
-		"}", false),
-		format("{"
-			"{"
-				"let _1 := 2 "
-				"let f_a := 7 "
-				"let f_x "
-				"{"
-					"let f_r := mul(f_a, f_a) "
-					"f_x := add(f_r, f_r)"
-				"}"
-				"{"
-				"}"
-			"}"
-			"function f(a) -> x"
-			"{"
-				"let r := mul(a, a) "
-				"x := add(r, r)"
-			"}"
-		"}", false)
-	);
+	string input = R"({
+		function f(a) -> x { let r := mul(a, a) x := add(r, r) }
+		pop(add(f(7), 2))
+	})";
+	string expectation = R"({
+		{
+			let f_a := 7
+			let f_x
+			{
+				let f_r := mul(f_a, f_a)
+				f_x := add(f_r, f_r)
+			}
+			pop(add(f_x, 2))
+		}
+		function f(a) -> x
+		{
+			let r := mul(a, a)
+			x := add(r, r)
+		}
+	})";
+	BOOST_CHECK_EQUAL(fullInline(input, false), format(expectation, false));
 }
 
 BOOST_AUTO_TEST_CASE(inside_condition)
