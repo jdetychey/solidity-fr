@@ -40,7 +40,11 @@ public:
 
 	static void run(Block& _ast);
 private:
-	ExpressionSimplifier() {}
+	ExpressionSimplifier(std::map<std::string, Expression const*> _ssaValues):
+		m_ssaValues(std::move(_ssaValues))
+	{}
+
+	std::map<std::string, Expression const*> m_ssaValues;
 };
 
 }

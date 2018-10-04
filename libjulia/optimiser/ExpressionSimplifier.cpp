@@ -26,6 +26,7 @@
 #include <libjulia/optimiser/NameCollector.h>
 #include <libjulia/optimiser/NameDispenser.h>
 #include <libjulia/optimiser/Semantics.h>
+#include <libjulia/optimiser/SSAValueTracker.h>
 
 #include <libsolidity/inlineasm/AsmData.h>
 
@@ -40,14 +41,14 @@ using namespace dev::solidity;
 void ExpressionSimplifier::visit(Expression& _expression)
 {
 	ASTModifier::visit(_expression);
-	while (auto match = SimplificationRules::findFirstMatch(_expression))
+	while (auto match = SimplificationRules::findFirstMatch(_expression, m_ssaValues))
 	{
 		// Do not apply the rule if it removes non-constant parts of the expression.
 		// TODO: The check could actually be less strict than "movable".
 		// We only require "Does not cause side-effects".
+		// Note: Variable references are always movable, so if the current value
+		// of the variable is not movable, the expression that references the variable still is.
 
-		// TODO: Another thing we could do: If "any" expressions are only variables,
-		// we do not have to check for movability.
 		if (match->removesNonConstants && !MovableChecker(_expression).movable())
 			return;
 		_expression = match->action().toExpression(locationOf(_expression));
@@ -62,7 +63,9 @@ void ExpressionSimplifier::run(Block& _ast)
 	// TODO we could assume it to be broken already
 	ExpressionBreaker{dispenser}(_ast);
 
-	ExpressionSimplifier{}(_ast);
+	SSAValueTracker ssaValues;
+	ssaValues(_ast);
+	ExpressionSimplifier{ssaValues.values()}(_ast);
 
 	ExpressionUnbreaker{_ast}(_ast);
 }
