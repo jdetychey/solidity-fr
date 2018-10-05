@@ -1444,13 +1444,9 @@ void TypeChecker::checkExpressionAssignment(Type const& _type, Expression const&
 		auto const* tupleType = dynamic_cast<TupleType const*>(&_type);
 		auto const& types = tupleType ? tupleType->components() : vector<TypePointer> { _type.shared_from_this() };
 
-		solAssert(tupleExpression->components().size() == types.size(), "");
-		for (size_t i = 0; i < types.size(); i++)
+		for (size_t i = 0; i < min(tupleExpression->components().size(), types.size()); i++)
 			if (types[i])
-			{
-				solAssert(!!tupleExpression->components()[i], "");
 				checkExpressionAssignment(*types[i], *tupleExpression->components()[i]);
-			}
 	}
 	else if (_type.category() == Type::Category::Mapping)
 	{
@@ -2506,6 +2502,8 @@ void TypeChecker::requireLValue(Expression const& _expression)
 {
 	_expression.annotation().lValueRequested = true;
 	_expression.accept(*this);
+
+	solAssert(!!_expression.annotation().type, "Type requested but not present.");
 
 	if (_expression.annotation().isConstant)
 		m_errorReporter.typeError(_expression.location(), "Cannot assign to a constant variable.");

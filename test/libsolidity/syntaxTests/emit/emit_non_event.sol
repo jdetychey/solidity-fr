@@ -7,4 +7,3 @@ contract C {
 }
 // ----
 // TypeError: (63-69): Type is not callable
-// TypeError: (63-67): Expression has to be an event invocation.
