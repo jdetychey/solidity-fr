@@ -799,8 +799,8 @@ Arrays
 
 Arrays can have a compile-time fixed size or a dynamic size. For arrays stored
 in the ``storage`` data location, the element type is arbitrary (i.e., also
-other ``array``, ``mapping`` or ``struct`` types). For arrays stored in the
-``memory`` data location, you cannot assign a ``mapping`` type and the type has
+other ``array``, ``mapping`` or ``struct`` types). Arrays stored in the
+``memory`` data location cannot have a ``mapping`` type and the type has
 to be an :ref:`ABI type <ABI>` if it is an argument of a publicly-visible
 function.
 
