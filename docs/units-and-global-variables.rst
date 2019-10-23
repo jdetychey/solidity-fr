@@ -182,7 +182,7 @@ Pour plus d'informations, voir la section sur :ref:`adresse`.
 
 .. note::
     Avant la version 0.5.0, Solidity permettait aux membres d'adresses d'être accessibles par une instance de contrat, par exemple ``this.balance``.
-    Ceci est maintenant interdit et une conversion explicite en adresse doit être faite : ``adresse(this).balance``.
+    Ceci est maintenant interdit et une conversion explicite en adresse doit être faite : ``address(this).balance``.
 
 .. note::
     Si l'accès aux variables d'état s'effectue via un appel de délégation de bas niveau, le plan de stockage des deux contrats doit être alignée pour que le contrat appelé puisse accéder correctement aux variables de stockage du contrat appelant par leur nom.
